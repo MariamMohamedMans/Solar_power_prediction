@@ -1,5 +1,5 @@
 import os
-import urllib.request
+import zipfile
 import pickle
 import numpy as np
 from fastapi import FastAPI, Request, Form
@@ -10,19 +10,14 @@ app = FastAPI()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+zip_path = os.path.join(BASE_DIR, "models.zip")
 scaler_path = os.path.join(BASE_DIR, "scaler.pkl")
 model_path = os.path.join(BASE_DIR, "solar_model.pkl")
 
-# روابط التنزيل المباشرة لملفاتك على Google Drive
-SCALER_URL = "https://drive.google.com/uc?export=download&id=1P0HuBC5FstOWVoHpgfJ0Crwf-ORGkeJc"
-MODEL_URL = "https://drive.google.com/uc?export=download&id=1GzFWGs1tHBWtGawDcFeHW0fWsjqNr8JA"
-
-# تنزيل الملفات تلقائياً لو مش موجودة في بيئة Vercel
-if not os.path.exists(scaler_path):
-    urllib.request.urlretrieve(SCALER_URL, scaler_path)
-
-if not os.path.exists(model_path):
-    urllib.request.urlretrieve(MODEL_URL, model_path)
+# فك الضغط تلقائياً لو الملفات غير موجودة
+if os.path.exists(zip_path) and (not os.path.exists(scaler_path) or not os.path.exists(model_path)):
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(BASE_DIR)
 
 # تحميل الـ Scaler والموديل
 scaler = pickle.load(open(scaler_path, "rb"))
