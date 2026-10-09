@@ -1,4 +1,5 @@
 import os
+import urllib.request
 import pickle
 import numpy as np
 from fastapi import FastAPI, Request, Form
@@ -7,17 +8,26 @@ from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
-# تحديد المسار المطلق للفولدر الحالي عشان Vercel ما يضيعش المسارات
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# تحميل الموديل والـ Scaler بمسارات مطلقة
-model_path = os.path.join(BASE_DIR, "solar_model.pkl")
 scaler_path = os.path.join(BASE_DIR, "scaler.pkl")
+model_path = os.path.join(BASE_DIR, "solar_model.pkl")
 
-model = pickle.load(open(model_path, "rb"))
+# روابط التنزيل المباشرة لملفاتك على Google Drive
+SCALER_URL = "https://drive.google.com/uc?export=download&id=1P0HuBC5FstOWVoHpgfJ0Crwf-ORGkeJc"
+MODEL_URL = "https://drive.google.com/uc?export=download&id=1GzFWGs1tHBWtGawDcFeHW0fWsjqNr8JA"
+
+# تنزيل الملفات تلقائياً لو مش موجودة في بيئة Vercel
+if not os.path.exists(scaler_path):
+    urllib.request.urlretrieve(SCALER_URL, scaler_path)
+
+if not os.path.exists(model_path):
+    urllib.request.urlretrieve(MODEL_URL, model_path)
+
+# تحميل الـ Scaler والموديل
 scaler = pickle.load(open(scaler_path, "rb"))
+model = pickle.load(open(model_path, "rb"))
 
-# إعداد الـ Templates
 templates = Jinja2Templates(directory=BASE_DIR)
 
 @app.get("/", response_class=HTMLResponse)
@@ -31,7 +41,6 @@ async def predict(
     module_temp: float = Form(...),
     irradiation: float = Form(...)
 ):
-    # تجهيز المدخلات وإجراء التنبؤ
     features = np.array([[ambient_temp, module_temp, irradiation]])
     scaled_features = scaler.transform(features)
     prediction = model.predict(scaled_features)[0]
