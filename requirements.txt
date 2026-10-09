@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-scikit-learn
-numpy
 jinja2
 python-multipart
+scikit-learn
+numpy
