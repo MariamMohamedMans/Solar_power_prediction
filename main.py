@@ -12,6 +12,12 @@ warnings.filterwarnings('ignore')
 # Initialize FastAPI app
 app = FastAPI(title="Solar Power Prediction API")
 
+templates = Jinja2Templates(directory=".")
+
+@app.get("/", response_class=HTMLResponse)
+async def read_item(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
 # Configure CORS so the front-end can communicate with this back-end
 app.add_middleware(
     CORSMiddleware,
