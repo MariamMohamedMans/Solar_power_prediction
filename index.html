@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متوقع إنتاج الطاقة الشمسية الذكي</title>
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --bg-color: #fef3c7;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 450px;
+        }
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        p.description {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background-color: #d97706;
+        }
+        .result-box {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #fffbeb;
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        .result-box span {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>☀️ متوقع إنتاج الطاقة</h2>
+    <p class="description">قم بتغيير مؤشرات الطقس لتوقع كمية الطاقة التي ستنتجها الألواح.</p>
+
+    <div class="input-group">
+        <label>درجة الحرارة المحيطة (مئوية) <span id="val1">25</span></label>
+        <input type="range" id="ambient" min="10" max="45" value="25" step="0.1" oninput="updateVal('ambient', 'val1')">
+    </div>
+
+    <div class="input-group">
+        <label>درجة حرارة الألواح (مئوية) <span id="val2">40</span></label>
+        <input type="range" id="module" min="10" max="65" value="40" step="0.1" oninput="updateVal('module', 'val2')">
+    </div>
+
+    <div class="input-group">
+        <label>كثافة الإشعاع الشمسي <span id="val3">0.5</span></label>
+        <input type="range" id="irrad" min="0.0" max="1.5" value="0.5" step="0.01" oninput="updateVal('irrad', 'val3')">
+    </div>
+
+    <button onclick="predict()">توقع الطاقة الآن</button>
+
+    <div class="result-box" id="result-container">
+        الطاقة المتوقعة<br>
+        <span id="result-text">0.00</span> واط
+    </div>
+</div>
+
+<script>
+    // Update labels dynamically when sliders move
+    function updateVal(inputId, spanId) {
+        document.getElementById(spanId).innerText = document.getElementById(inputId).value;
+    }
+
+    // Call the FastAPI Back-end
+    async function predict() {
+        const ambient = parseFloat(document.getElementById('ambient').value);
+        const module = parseFloat(document.getElementById('module').value);
+        const irrad = parseFloat(document.getElementById('irrad').value);
+        const btn = document.querySelector('button');
+
+        btn.innerText = "جاري الحساب...";
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ambient_temperature: ambient,
+                    module_temperature: module,
+                    irradiation: irrad
+                })
+            });
+
+            const data = await response.json();
+            document.getElementById('result-container').style.display = 'block';
+            document.getElementById('result-text').innerText = data.predicted_power;
+        } catch (error) {
+            alert("حدث خطأ في الاتصال بالخادم. تأكد من تشغيل FastAPI.");
+        } finally {
+            btn.innerText = "توقع الطاقة الآن";
+        }
+    }
+</script>
+
+</body>
+</html>
