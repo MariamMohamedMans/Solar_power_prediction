@@ -1,5 +1,4 @@
 import os
-import zipfile
 import pickle
 import numpy as np
 from fastapi import FastAPI, Request, Form
@@ -10,18 +9,12 @@ app = FastAPI()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-zip_path = os.path.join(BASE_DIR, "models.zip")
-scaler_path = os.path.join(BASE_DIR, "scaler.pkl")
+# تحميل الموديل والـ Scaler من المجلد الحالي
 model_path = os.path.join(BASE_DIR, "solar_model.pkl")
+scaler_path = os.path.join(BASE_DIR, "scaler.pkl")
 
-# فك الضغط تلقائياً لو الملفات غير موجودة
-if os.path.exists(zip_path) and (not os.path.exists(scaler_path) or not os.path.exists(model_path)):
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extractall(BASE_DIR)
-
-# تحميل الـ Scaler والموديل
-scaler = pickle.load(open(scaler_path, "rb"))
 model = pickle.load(open(model_path, "rb"))
+scaler = pickle.load(open(scaler_path, "rb"))
 
 templates = Jinja2Templates(directory=BASE_DIR)
 
