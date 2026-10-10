@@ -7,19 +7,22 @@ from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
+# تحديد المسار المطلق للمجلد الحالي
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 scaler_path = os.path.join(BASE_DIR, "scaler.pkl")
 model_path = os.path.join(BASE_DIR, "solar_model.pkl")
 
-# استخدام joblib بدلاً من pickle لتجنب أخطاء STACK_GLOBAL
+# تحميل الـ Scaler والموديل باستخدام joblib
 scaler = joblib.load(scaler_path)
 model = joblib.load(model_path)
 
+# إعداد ملفات الـ Templates
 templates = Jinja2Templates(directory=BASE_DIR)
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 @app.post("/predict", response_class=HTMLResponse)
 async def predict(
@@ -28,11 +31,13 @@ async def predict(
     module_temp: float = Form(...),
     irradiation: float = Form(...)
 ):
+    # تجهيز المدخلات وإجراء التنبؤ
     features = np.array([[ambient_temp, module_temp, irradiation]])
     scaled_features = scaler.transform(features)
     prediction = model.predict(scaled_features)[0]
     
     return templates.TemplateResponse(
+        request, 
         "index.html", 
-        {"request": request, "prediction_text": f"المخرجات المتوقعة: {prediction:.2f}"}
+        {"prediction_text": f"المخرجات المتوقعة: {prediction:.2f}"}
     )
